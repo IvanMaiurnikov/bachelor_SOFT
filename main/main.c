@@ -8,10 +8,6 @@
 #include <esp_http_server.h>
 #include "nvs_flash.h"
 #include "esp_spiffs.h"
-//#include <esp_adc/adc_oneshot.h>
-//#include "esp_adc/adc_cali.h"
-//#include "esp_adc/adc_cali_scheme.h"
-
 #include "connect_wifi.h"
 #include "adc_poll.h"
 
