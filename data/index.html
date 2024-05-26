@@ -1,0 +1,221 @@
+<!DOCTYPE html> 
+<html> 
+  
+<head> 
+    <title> 
+        Batteries Property 
+    </title> 
+  
+    <style> 
+        body { 
+            background-color: #fff; 
+        } 
+  
+        .battery-cont {
+            padding:15px;
+            height: 180px;
+            width: 351px; 
+            position: relative;
+        }
+        .battery { 
+            height: 140px; 
+            width: 321px; 
+            border: 5px solid #000; 
+            border-radius: 7px;
+            margin: auto; 
+            position: absolute; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            top: 0; 
+        } 
+  
+        .top { 
+            height: 40px; 
+            width: 25px; 
+            background-color: #000; 
+            position: relative; 
+            left: 325px; 
+            top: 52px; 
+            border-radius: 0 3px 3px 0; 
+        } 
+  
+        .charge { 
+            position: absolute;
+            left:10px;
+            top:10px;
+            bottom:10px;
+            right:10px;
+        }
+        #charge-1, #charge-2, #charge-3 { 
+            width: 0%%; 
+            background-color: #3BC700;
+            position: absolute;
+            left:0;
+            top:0;
+            bottom:0;
+            z-index: 100;
+            -webkit-transition: width 1s ease-in-out;
+            -moz-transition: width 1s ease-in-out;
+            -o-transition: width 1s ease-in-out;
+            transition: width 1s ease-in-out;
+        }
+        #val-1, #val-2, #val-3 { 
+            position: absolute;
+            left:120px;
+            top:42px;
+            font-size: 25px;
+            font-weight: bold;
+            z-index: 200;
+        }
+        #volt-1, #volt-2, #volt-3 { 
+            position: absolute;
+            left:100%%;
+            top:42px;
+            font-size: 25px;
+            font-weight: bold;
+            z-index: 200;
+            padding-left: 50px;
+            white-space: nowrap;
+        }
+        .fl {
+            float: left;
+        }
+        .prop-block {
+            padding: 50px 15px 15px 100px;
+            font-size: 25px;
+        }
+        .sep {
+            width:2px;
+            background-color: #fff;
+            position: absolute;
+            top:0;
+            bottom:0;
+            z-index: 150;
+        }
+        .sep-25 {
+            left: 25%%;
+        }
+        .sep-50 {
+            left: 50%%;
+        }
+        .sep-75 {
+            left: 75%%;
+        }
+    </style> 
+</head> 
+  
+<body>
+    <div class="fl">
+        <div class="battery-cont">
+            <div class="battery"> 
+                <div class="top"></div> 
+                <div class="charge">
+                    <div id="charge-1"></div>
+                    <div class="sep sep-25"></div>
+                    <div class="sep sep-50"></div>
+                    <div class="sep sep-75"></div>
+                    <div id="val-1"></div>
+                    <div id="volt-1"></div>
+                </div> 
+            </div>
+        </div>
+        <div class="battery-cont">
+            <div class="battery"> 
+                <div class="top"></div> 
+                <div class="charge">
+                    <div id="charge-2"></div>
+                    <div class="sep sep-25"></div>
+                    <div class="sep sep-50"></div>
+                    <div class="sep sep-75"></div>
+                    <div id="val-2"></div>
+                    <div id="volt-2"></div>
+                </div> 
+            </div>
+        </div>
+        <div class="battery-cont">
+            <div class="battery"> 
+                <div class="top"></div> 
+                <div class="charge">
+                    <div id="charge-3"></div>
+                    <div class="sep sep-25"></div>
+                    <div class="sep sep-50"></div>
+                    <div class="sep sep-75"></div>
+                    <div id="val-3"></div>
+                    <div id="volt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="fl">
+        <div class="prop-block">
+            Total:
+            <b id="voltage-total"></b>
+            V
+        </div>
+        <div class="prop-block">
+            Current:
+            <b id="current"></b>
+            A
+        </div>
+        <div class="prop-block">
+            Power:
+            <b id="power"></b>
+            W
+        </div>
+        <div class="prop-block">
+            Capacity:
+            <b id="capacity"></b>
+            mAh
+        </div>
+    </div>
+    </body>
+
+    <script>
+        function getData() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.status == 200 && this.readyState == 4) {
+                //document.getElementById("demo").innerHTML = this.responseText;
+                    var data = JSON.parse(this.responseText);
+                    var batMaxVoltage = 12;
+                    var voltageTotal = 0;
+                    var colorLow = "#ed3f46";
+                    var colorMiddle = "#fcb537";
+                    var colorHigh = "#3BC700";
+                    for(var i=1; i<=3; i++)
+                    {
+                        voltageTotal += data["voltage-"+i];
+                        var percent = data["voltage-"+i]*100/12;
+                        percent = Math.round(percent * 10) / 10;
+                        if(percent <= 15)
+                            document.getElementById("charge-"+i).style.backgroundColor = colorLow;
+                        else if(percent <= 85)
+                            document.getElementById("charge-"+i).style.backgroundColor = colorMiddle;
+                        else
+                            document.getElementById("charge-"+i).style.backgroundColor = colorHigh;
+                        document.getElementById("charge-"+i).style.width = percent+"%%";
+                        document.getElementById("val-"+i).textContent = " "+percent+"%% ";
+                        document.getElementById("volt-"+i).textContent = " "+data["voltage-"+i]+" V";
+                    }
+                    // console.log(voltageTotal);
+                    voltageTotal = Math.round(voltageTotal * 10) / 10;
+                    document.getElementById("voltage-total").textContent = voltageTotal;
+                    document.getElementById("current").textContent = data["current"];
+                    document.getElementById("power").textContent = data["power"];
+                    document.getElementById("capacity").textContent = data["capacity"];
+                }
+            };
+            xhttp.open("GET", "/update", true);
+            xhttp.send();
+            }
+
+            getData();
+
+            setInterval(function() {
+                getData();
+            }, 5000);
+    </script>
+</body> 
+
+</html>
