@@ -4,7 +4,7 @@
     typedef struct {
         unsigned int channel;
         int adc_raw;
-        int voltage;
+        float voltage;
     } ADC_MESSAGE;
 
 void adc_poll_task(void *);

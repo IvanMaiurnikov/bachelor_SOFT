@@ -48,7 +48,7 @@
             right:10px;
         }
         #charge-1, #charge-2, #charge-3 { 
-            width: 0%%; 
+            width: 0%; 
             background-color: #3BC700;
             position: absolute;
             left:0;
@@ -70,7 +70,7 @@
         }
         #volt-1, #volt-2, #volt-3 { 
             position: absolute;
-            left:100%%;
+            left:100%;
             top:42px;
             font-size: 25px;
             font-weight: bold;
@@ -94,13 +94,13 @@
             z-index: 150;
         }
         .sep-25 {
-            left: 25%%;
+            left: 25%;
         }
         .sep-50 {
-            left: 50%%;
+            left: 50%;
         }
         .sep-75 {
-            left: 75%%;
+            left: 75%;
         }
     </style> 
 </head> 
@@ -194,8 +194,8 @@
                             document.getElementById("charge-"+i).style.backgroundColor = colorMiddle;
                         else
                             document.getElementById("charge-"+i).style.backgroundColor = colorHigh;
-                        document.getElementById("charge-"+i).style.width = percent+"%%";
-                        document.getElementById("val-"+i).textContent = " "+percent+"%% ";
+                        document.getElementById("charge-"+i).style.width = percent+"%";
+                        document.getElementById("val-"+i).textContent = " "+percent+"% ";
                         document.getElementById("volt-"+i).textContent = " "+data["voltage-"+i]+" V";
                     }
                     // console.log(voltageTotal);

@@ -20,7 +20,7 @@ const static adc_channel_t ADC_CHANNELS[POLL_CHANNELS_NUM] = {
     ADC_CHANNEL_7
 };
 
-static ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
+ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
 
 /*---------------------------------------------------------------
         ADC Calibration
@@ -88,6 +88,7 @@ static void adc_poll_calibration_deinit(adc_cali_handle_t handle)
 
 void adc_poll_task(void *pvParameter) {
     unsigned int i;
+    int mv;
         //-------------ADC1 Init---------------//
     adc_oneshot_unit_handle_t adc1_handle;
     adc_oneshot_unit_init_cfg_t init_config1 = {
@@ -105,9 +106,6 @@ void adc_poll_task(void *pvParameter) {
     }
 
     //-------------ADC1 Calibration Init---------------//
-    adc_cali_handle_t adc1_cali_chan0_handle = NULL;
-    adc_cali_handle_t adc1_cali_chan1_handle = NULL;
-
     adc_cali_handle_t adc1_cali_handle[POLL_CHANNELS_NUM] = {
         NULL,
         NULL,
@@ -126,14 +124,16 @@ void adc_poll_task(void *pvParameter) {
     }
     i = 0;
     while(1){
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNELS[i], &adc_msg[i].adc_raw));
-        ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
-        if (do_calibration1[i]) {
-            ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle[i], adc_msg[i].adc_raw, &adc_msg[i].voltage));
-            ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %d mV", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].voltage);
+        for (i=0; i < POLL_CHANNELS_NUM; i++){
+            ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNELS[i], &adc_msg[i].adc_raw));
+            ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
+            if (do_calibration1[i]) {
+                ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle[i], adc_msg[i].adc_raw, &mv));
+                adc_msg[i].voltage=(float)mv/1000.0;
+                ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %.2f V", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].voltage);
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
-        if( ++i >= POLL_CHANNELS_NUM) i=0;
     }
 
 }

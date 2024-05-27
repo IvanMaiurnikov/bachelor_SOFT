@@ -3,6 +3,7 @@
 #include <string.h> //Requires by memset
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "esp_system.h"
 #include "spi_flash_mmap.h"
 #include <esp_http_server.h>
@@ -22,6 +23,7 @@ int led_state = 0;
 
 #define INDEX_HTML_PATH "/spiffs/index.html"
 char index_html[8192];
+extern ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
 //char response_data[8192];
 
 static void initi_web_page_buffer(void)
@@ -60,7 +62,9 @@ esp_err_t send_web_page(httpd_req_t *req)
 
 esp_err_t update_web_page(httpd_req_t *req){
     int response;
-    sprintf(index_html, "{\"voltage-1\": 10.5, \"voltage-2\": 1.7, \"voltage-3\": 5.1, \"current\":1.2, \"power\":11.16, \"capacity\":2200}");
+    sprintf(index_html, "{\"voltage-1\": %.2f, \"voltage-2\": %.2f, \"voltage-3\": %.2f, \"current\":%.2f, \"power\":%.2f, \"capacity\":2200}",
+    adc_msg[0].voltage, adc_msg[1].voltage, adc_msg[2].voltage, adc_msg[3].voltage, 
+    (adc_msg[0].voltage + adc_msg[1].voltage + adc_msg[2].voltage) * adc_msg[3].voltage);
     response = httpd_resp_send(req, index_html, HTTPD_RESP_USE_STRLEN);
     return response;
 }
