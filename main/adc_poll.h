@@ -7,5 +7,11 @@
         float voltage;
     } ADC_MESSAGE;
 
+    typedef struct 
+    {
+        float add;   //additive part of coefficient
+        float mult;  //multiplicative
+    } ADC_COEF;
+    
 void adc_poll_task(void *);
 #endif

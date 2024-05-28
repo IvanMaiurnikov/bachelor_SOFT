@@ -20,6 +20,10 @@ const static adc_channel_t ADC_CHANNELS[POLL_CHANNELS_NUM] = {
     ADC_CHANNEL_7
 };
 
+const static ADC_CHANNEL_CONV_COEF[POLL_CHANNELS_NUM] = {
+
+};
+
 ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
 
 /*---------------------------------------------------------------
@@ -135,5 +139,4 @@ void adc_poll_task(void *pvParameter) {
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
 }
