@@ -24,7 +24,7 @@ const static ADC_COEF ADC_CHANNEL_CONV_COEF[POLL_CHANNELS_NUM] = {
     {0.0, 0.002},
     {0.0, 0.002},
     {0.0, 0.002},
-    {}
+    {0.0, 0.002}
 };
 
 ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
