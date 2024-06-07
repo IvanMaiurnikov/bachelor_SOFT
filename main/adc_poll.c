@@ -21,10 +21,10 @@ const static adc_channel_t ADC_CHANNELS[POLL_CHANNELS_NUM] = {
 };
 
 const static ADC_COEF ADC_CHANNEL_CONV_COEF[POLL_CHANNELS_NUM] = {
-    {0.0, 0.002},
-    {0.0, 0.002},
-    {0.0, 0.002},
-    {0.0, 0.002}
+    {0.0, 1.34},
+    {0.0, 1.34},
+    {0.0, 1.34},
+    {0.0, 1.34}
 };
 
 ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
@@ -136,7 +136,7 @@ void adc_poll_task(void *pvParameter) {
             ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
             if (do_calibration1[i]) {
                 ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle[i], adc_msg[i].adc_raw, &mv));
-                adc_msg[i].voltage=(float)mv/1000.0;
+                adc_msg[i].voltage=((float)mv/1000.0)*ADC_CHANNEL_CONV_COEF[i].mult;
                 ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %.2f V", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].voltage);
             }
         }

@@ -47,7 +47,7 @@
             bottom:10px;
             right:10px;
         }
-        #charge-1, #charge-2, #charge-3 { 
+        #charge-1, #charge-2, #charge-3, #charge-4 { 
             width: 0%; 
             background-color: #3BC700;
             position: absolute;
@@ -60,7 +60,7 @@
             -o-transition: width 1s ease-in-out;
             transition: width 1s ease-in-out;
         }
-        #val-1, #val-2, #val-3 { 
+        #val-1, #val-2, #val-3, #val-4 { 
             position: absolute;
             left:120px;
             top:42px;
@@ -68,7 +68,7 @@
             font-weight: bold;
             z-index: 200;
         }
-        #volt-1, #volt-2, #volt-3 { 
+        #volt-1, #volt-2, #volt-3, #volt-4 { 
             position: absolute;
             left:100%;
             top:42px;
@@ -146,6 +146,19 @@
                 </div>
             </div>
         </div>
+        <div class="battery-cont">
+            <div class="battery"> 
+                <div class="top"></div> 
+                <div class="charge">
+                    <div id="charge-4"></div>
+                    <div class="sep sep-25"></div>
+                    <div class="sep sep-50"></div>
+                    <div class="sep sep-75"></div>
+                    <div id="val-4"></div>
+                    <div id="volt-4"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="fl">
         <div class="prop-block">
@@ -183,7 +196,7 @@
                     var colorLow = "#ed3f46";
                     var colorMiddle = "#fcb537";
                     var colorHigh = "#3BC700";
-                    for(var i=1; i<=3; i++)
+                    for(var i=1; i<=4; i++)
                     {
                         voltageTotal += data["voltage-"+i];
                         var percent = data["voltage-"+i]*100/12;

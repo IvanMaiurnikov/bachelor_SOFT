@@ -19,6 +19,7 @@ int led_state = 0;
 
 #define INDEX_HTML_PATH "/spiffs/index.html"
 char index_html[8192];
+char update_json[256];
 extern ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
 //char response_data[8192];
 
@@ -33,6 +34,7 @@ static void initi_web_page_buffer(void)
     ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
 
     memset((void *)index_html, 0, sizeof(index_html));
+    memset((void *)update_json, 0, sizeof(update_json));
     struct stat st;
     if (stat(INDEX_HTML_PATH, &st))
     {
@@ -58,10 +60,10 @@ esp_err_t send_web_page(httpd_req_t *req)
 
 esp_err_t update_web_page(httpd_req_t *req){
     int response;
-    sprintf(index_html, "{\"voltage-1\": %.2f, \"voltage-2\": %.2f, \"voltage-3\": %.2f, \"current\":%.2f, \"power\":%.2f, \"capacity\":2200}",
-    adc_msg[0].voltage, adc_msg[1].voltage, adc_msg[2].voltage, adc_msg[3].voltage, 
+    sprintf(update_json, "{\"voltage-1\": %.2f, \"voltage-2\": %.2f, \"voltage-3\": %.2f, \"voltage-4\": %.2f, \"current\":%.2f, \"power\":%.2f, \"capacity\":2200}",
+    adc_msg[0].voltage, adc_msg[1].voltage, adc_msg[2].voltage, adc_msg[3].voltage, adc_msg[4].voltage,
     (adc_msg[0].voltage + adc_msg[1].voltage + adc_msg[2].voltage) * adc_msg[3].voltage);
-    response = httpd_resp_send(req, index_html, HTTPD_RESP_USE_STRLEN);
+    response = httpd_resp_send(req, update_json, HTTPD_RESP_USE_STRLEN);
     return response;
 }
 
