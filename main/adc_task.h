@@ -1,6 +1,7 @@
 #ifndef _ADC_POLL_H
     #define _ADC_POLL_H
     #define POLL_CHANNELS_NUM 4
+    #define SAMPLES_PER_MEASURE 16
     typedef struct {
         unsigned int channel;
         int adc_raw;

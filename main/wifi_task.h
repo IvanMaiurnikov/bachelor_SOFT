@@ -1,5 +1,5 @@
-#ifndef CONNECT_WIFI_H_
-#define CONNECT_WIFI_H_
+#ifndef _WIFI_TASK
+#define _WIFI_TASK
 
 #include <esp_system.h>
 #include <nvs_flash.h>

@@ -9,8 +9,9 @@
 #include <esp_http_server.h>
 #include "nvs_flash.h"
 #include "esp_spiffs.h"
-#include "connect_wifi.h"
-#include "adc_poll.h"
+#include "wifi_task.h"
+#include "adc_task.h"
+#include "lcd_task.h"
 
 #define LED_PIN 5
 
@@ -126,4 +127,5 @@ void app_main()
         setup_server();
     }
     xTaskCreate(&adc_poll_task, "adc_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&lcd_task, "lcd_task",4096, NULL, 4, NULL);
 }

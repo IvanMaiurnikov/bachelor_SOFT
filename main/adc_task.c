@@ -4,7 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "soc/soc_caps.h"
-#include "adc_poll.h"
+#include "adc_task.h"
 #include "esp_log.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
@@ -95,7 +95,7 @@ static void adc_poll_calibration_deinit(adc_cali_handle_t handle)
 
 void adc_poll_task(void *pvParameter) {
     unsigned int i;
-    int mv;
+    int mv, mv_sum;
         //-------------ADC1 Init---------------//
     adc_oneshot_unit_handle_t adc1_handle;
     adc_oneshot_unit_init_cfg_t init_config1 = {
@@ -132,7 +132,12 @@ void adc_poll_task(void *pvParameter) {
     i = 0;
     while(1){
         for (i=0; i < POLL_CHANNELS_NUM; i++){
-            ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNELS[i], &adc_msg[i].adc_raw));
+            mv_sum = 0;
+            for (int j=0; j < SAMPLES_PER_MEASURE; j++){
+                ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNELS[i], &mv));
+                mv_sum += mv;
+            }
+            adc_msg[i].adc_raw = mv_sum / SAMPLES_PER_MEASURE;
             ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
             if (do_calibration1[i]) {
                 ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle[i], adc_msg[i].adc_raw, &mv));
