@@ -166,21 +166,6 @@
             <b id="voltage-total"></b>
             V
         </div>
-        <div class="prop-block">
-            Current:
-            <b id="current"></b>
-            A
-        </div>
-        <div class="prop-block">
-            Power:
-            <b id="power"></b>
-            W
-        </div>
-        <div class="prop-block">
-            Capacity:
-            <b id="capacity"></b>
-            mAh
-        </div>
     </div>
     </body>
 
@@ -199,11 +184,21 @@
                     for(var i=1; i<=4; i++)
                     {
                         voltageTotal += data["voltage-"+i];
-                        var percent = data["voltage-"+i]*100/12;
-                        percent = Math.round(percent * 10) / 10;
+                        var percent = 0; 
+                        var v = data["voltage-" + i]; 
+                        if(v >=3.755 && v < 3.82){
+                            percent = 25;
+                        } else if(v >= 3.82 && v < 3.96){
+                            percent = 50;
+                        }else if(v >= 3.96 && v < 4.15){
+                            percent = 75;
+                        } else if(v >= 4.15){
+                            percent = 100;
+                        }
+                        //percent = Math.round(percent * 10) / 10;
                         if(percent <= 15)
                             document.getElementById("charge-"+i).style.backgroundColor = colorLow;
-                        else if(percent <= 85)
+                        else if(percent <= 75)
                             document.getElementById("charge-"+i).style.backgroundColor = colorMiddle;
                         else
                             document.getElementById("charge-"+i).style.backgroundColor = colorHigh;
@@ -214,9 +209,6 @@
                     // console.log(voltageTotal);
                     voltageTotal = Math.round(voltageTotal * 10) / 10;
                     document.getElementById("voltage-total").textContent = voltageTotal;
-                    document.getElementById("current").textContent = data["current"];
-                    document.getElementById("power").textContent = data["power"];
-                    document.getElementById("capacity").textContent = data["capacity"];
                 }
             };
             xhttp.open("GET", "/update", true);

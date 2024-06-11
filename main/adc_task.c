@@ -28,6 +28,8 @@ const static ADC_COEF ADC_CHANNEL_CONV_COEF[POLL_CHANNELS_NUM] = {
 };
 
 ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
+extern TaskHandle_t TaskHandlerWifi;
+extern TaskHandle_t TaskHandlerLCD;
 
 /*---------------------------------------------------------------
         ADC Calibration
@@ -94,6 +96,9 @@ static void adc_poll_calibration_deinit(adc_cali_handle_t handle)
 }
 
 void adc_poll_task(void *pvParameter) {
+    float prev_total_volt = 0.0;
+    uint16_t sec_counter = 0;
+    int16_t bat_running_mode = BAT_CHARGE_MODE;          //battery running mode: 1 - charge, 0 - discharge 
     unsigned int i;
     int mv, mv_sum;
         //-------------ADC1 Init---------------//
@@ -138,13 +143,48 @@ void adc_poll_task(void *pvParameter) {
                 mv_sum += mv;
             }
             adc_msg[i].adc_raw = mv_sum / SAMPLES_PER_MEASURE;
-            ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
+            //ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
             if (do_calibration1[i]) {
                 ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle[i], adc_msg[i].adc_raw, &mv));
                 adc_msg[i].voltage=((float)mv/1000.0)*ADC_CHANNEL_CONV_COEF[i].mult;
-                ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %.2f V", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].voltage);
+                //ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %.2f V", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].voltage);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
+        if(++sec_counter >= 5){
+            sec_counter=0;
+            float cur_total_voltage = 0.0;
+            for(i=0; i < POLL_CHANNELS_NUM; i++){
+                cur_total_voltage += adc_msg[i].voltage;
+            }
+            if ((cur_total_voltage - prev_total_volt) > 0.05 || 
+                cur_total_voltage >= MAX_CELL_VOLT*POLL_CHANNELS_NUM - 0.01){
+                if (bat_running_mode != BAT_CHARGE_MODE){
+                    bat_running_mode = BAT_CHARGE_MODE;
+                }
+                prev_total_volt = cur_total_voltage;
+            }
+
+            if ((cur_total_voltage - prev_total_volt) < -0.05) {
+                if (bat_running_mode != BAT_DISCHARGE_MODE){
+                    ESP_LOGI(TAG,"Entering sleep mode");
+                    bat_running_mode = BAT_DISCHARGE_MODE;
+                    xTaskNotify(TaskHandlerWifi, 1 << 0, eSetBits);
+                    xTaskNotify(TaskHandlerLCD, 1 << 0, eSetBits);
+                }
+                prev_total_volt = cur_total_voltage;
+            }
+
+            if(abs(cur_total_voltage - prev_total_volt) <= 0.05){
+                if (bat_running_mode != BAT_HOLD_MODE){
+                    bat_running_mode = BAT_HOLD_MODE;
+                }
+            }
+
+            ESP_LOGI(TAG, "Total voltage: %.2f Battery mode: %s", 
+                     cur_total_voltage,
+                     bat_running_mode ? "DISCHARGE" : "CHARGE");
+        }
+
     }
 }

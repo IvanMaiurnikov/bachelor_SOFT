@@ -255,3 +255,27 @@ void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll) {
 	i2c_cmd_link_delete(cmd);
 }
 
+void i2c_display_off(SSD1306_t * dev){
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+	i2c_master_start(cmd);
+	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
+	i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_OFF, true); // 00
+	i2c_master_stop(cmd);
+	esp_err_t res = i2c_master_cmd_begin(I2C_NUM, cmd, I2C_TICKS_TO_WAIT);
+	if (res != ESP_OK) {
+		ESP_LOGE(TAG, "Display off command failed. code: 0x%.2X", res);
+	}
+	i2c_cmd_link_delete(cmd);
+}
+void i2c_display_on(SSD1306_t * dev){
+	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+	i2c_master_start(cmd);
+	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
+	i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_ON, true); // 00
+	i2c_master_stop(cmd);
+	esp_err_t res = i2c_master_cmd_begin(I2C_NUM, cmd, I2C_TICKS_TO_WAIT);
+	if (res != ESP_OK) {
+		ESP_LOGE(TAG, "Display off command failed. code: 0x%.2X", res);
+	}
+	i2c_cmd_link_delete(cmd);
+}

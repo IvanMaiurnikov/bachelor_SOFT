@@ -17,8 +17,11 @@
 #include <lwip/api.h>
 #include <lwip/netdb.h>
 
+#define NOTIFY_SLEEP_WIFI 1
+#define NOTIFY_WAKE_WIFI 2
+
 extern int wifi_connect_status;
 
-void connect_wifi(void);
+void wifi_task(void *pvParameter);
 
 #endif

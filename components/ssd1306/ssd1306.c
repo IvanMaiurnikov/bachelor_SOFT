@@ -617,3 +617,14 @@ void ssd1306_dump_page(SSD1306_t * dev, int page, int seg)
 	ESP_LOGI(TAG, "dev->_page[%d]._segs[%d]=%02x", page, seg, dev->_page[page]._segs[seg]);
 }
 
+void ssd1306_display_off(SSD1306_t * dev){
+    if (dev->_address != SPI_ADDRESS) {
+		i2c_display_off(dev);
+	}
+}
+void ssd1306_display_on(SSD1306_t * dev){
+	if (dev->_address != SPI_ADDRESS) {
+		i2c_display_on(dev);
+	}
+}
+
