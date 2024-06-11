@@ -98,6 +98,14 @@ static void adc_poll_calibration_deinit(adc_cali_handle_t handle)
 #endif
 }
 
+static int16_t adc_wakeup_subtasks()
+{
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
+    xTaskNotify(TaskHandlerWifi, 1 << WAKEUP_BITNUM, eSetBits);
+    xTaskNotify(TaskHandlerLCD, 1 << WAKEUP_BITNUM, eSetBits);
+    return 0;
+}
 void adc_poll_task(void *pvParameter) {
     esp_sleep_wakeup_cause_t wakeup_reason;
     float prev_total_volt = 0.0;
@@ -143,11 +151,7 @@ void adc_poll_task(void *pvParameter) {
         if (adc_sleep){
             wakeup_reason = esp_sleep_get_wakeup_cause();
             if(wakeup_reason==ESP_SLEEP_WAKEUP_EXT0){
-                esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
-                esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
-                adc_sleep = 0;
-                xTaskNotify(TaskHandlerWifi, 1 << WAKEUP_BITNUM, eSetBits);
-                xTaskNotify(TaskHandlerLCD, 1 << WAKEUP_BITNUM, eSetBits);
+               adc_sleep = adc_wakeup_subtasks();
             }
         }
         for (i=0; i < POLL_CHANNELS_NUM; i++){
@@ -172,7 +176,7 @@ void adc_poll_task(void *pvParameter) {
                 cur_total_voltage >= MAX_CELL_VOLT*POLL_CHANNELS_NUM - 0.01){
                 if (bat_running_mode != BAT_CHARGE_MODE){
                     bat_running_mode = BAT_CHARGE_MODE;
-                    adc_sleep = 0;
+                    adc_sleep = adc_wakeup_subtasks();
                 }
                 prev_total_volt = cur_total_voltage;
             }
