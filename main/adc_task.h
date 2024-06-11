@@ -8,6 +8,9 @@
     #define BAT_HOLD_MODE 0
     #define BAT_DISCHARGE_MODE -1
 
+    #define SLEEP_BITNUM 0
+    #define WAKEUP_BITNUM 1
+
     typedef struct {
         unsigned int channel;
         int adc_raw;

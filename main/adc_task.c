@@ -9,6 +9,8 @@
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
+#include "driver/rtc_io.h"
+#include "esp_sleep.h"
 
 #define ADC_POLL_ATTEN           ADC_ATTEN_DB_12
 
@@ -30,6 +32,7 @@ const static ADC_COEF ADC_CHANNEL_CONV_COEF[POLL_CHANNELS_NUM] = {
 ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
 extern TaskHandle_t TaskHandlerWifi;
 extern TaskHandle_t TaskHandlerLCD;
+static int adc_sleep = 0;
 
 /*---------------------------------------------------------------
         ADC Calibration
@@ -96,6 +99,7 @@ static void adc_poll_calibration_deinit(adc_cali_handle_t handle)
 }
 
 void adc_poll_task(void *pvParameter) {
+    esp_sleep_wakeup_cause_t wakeup_reason;
     float prev_total_volt = 0.0;
     uint16_t sec_counter = 0;
     int16_t bat_running_mode = BAT_CHARGE_MODE;          //battery running mode: 1 - charge, 0 - discharge 
@@ -136,6 +140,16 @@ void adc_poll_task(void *pvParameter) {
     }
     i = 0;
     while(1){
+        if (adc_sleep){
+            wakeup_reason = esp_sleep_get_wakeup_cause();
+            if(wakeup_reason==ESP_SLEEP_WAKEUP_EXT0){
+                esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
+                esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
+                adc_sleep = 0;
+                xTaskNotify(TaskHandlerWifi, 1 << WAKEUP_BITNUM, eSetBits);
+                xTaskNotify(TaskHandlerLCD, 1 << WAKEUP_BITNUM, eSetBits);
+            }
+        }
         for (i=0; i < POLL_CHANNELS_NUM; i++){
             mv_sum = 0;
             for (int j=0; j < SAMPLES_PER_MEASURE; j++){
@@ -143,14 +157,11 @@ void adc_poll_task(void *pvParameter) {
                 mv_sum += mv;
             }
             adc_msg[i].adc_raw = mv_sum / SAMPLES_PER_MEASURE;
-            //ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].adc_raw);
             if (do_calibration1[i]) {
                 ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle[i], adc_msg[i].adc_raw, &mv));
                 adc_msg[i].voltage=((float)mv/1000.0)*ADC_CHANNEL_CONV_COEF[i].mult;
-                //ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %.2f V", ADC_UNIT_1 + 1, ADC_CHANNELS[i], adc_msg[i].voltage);
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(1000));
         if(++sec_counter >= 5){
             sec_counter=0;
             float cur_total_voltage = 0.0;
@@ -161,6 +172,7 @@ void adc_poll_task(void *pvParameter) {
                 cur_total_voltage >= MAX_CELL_VOLT*POLL_CHANNELS_NUM - 0.01){
                 if (bat_running_mode != BAT_CHARGE_MODE){
                     bat_running_mode = BAT_CHARGE_MODE;
+                    adc_sleep = 0;
                 }
                 prev_total_volt = cur_total_voltage;
             }
@@ -169,8 +181,13 @@ void adc_poll_task(void *pvParameter) {
                 if (bat_running_mode != BAT_DISCHARGE_MODE){
                     ESP_LOGI(TAG,"Entering sleep mode");
                     bat_running_mode = BAT_DISCHARGE_MODE;
-                    xTaskNotify(TaskHandlerWifi, 1 << 0, eSetBits);
-                    xTaskNotify(TaskHandlerLCD, 1 << 0, eSetBits);
+                    xTaskNotify(TaskHandlerWifi, 1 << SLEEP_BITNUM, eSetBits);
+                    xTaskNotify(TaskHandlerLCD, 1 << SLEEP_BITNUM, eSetBits);
+                    rtc_gpio_pullup_en(GPIO_NUM_13);
+                    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
+                    esp_sleep_enable_timer_wakeup(1000000L);
+                    adc_sleep = 1;
+                    esp_deep_sleep_start();
                 }
                 prev_total_volt = cur_total_voltage;
             }
@@ -185,6 +202,8 @@ void adc_poll_task(void *pvParameter) {
                      cur_total_voltage,
                      bat_running_mode ? "DISCHARGE" : "CHARGE");
         }
+
+        if(!adc_sleep) vTaskDelay(pdMS_TO_TICKS(1000));
 
     }
 }

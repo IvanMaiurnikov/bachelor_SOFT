@@ -15,7 +15,8 @@
         "esp_adc_cal.h": "c",
         "adc.h": "c",
         "sdkconfig.h": "c",
-        "ssd1306.h": "c"
+        "ssd1306.h": "c",
+        "rtc_io.h": "c"
     },
     "idf.portWin": "COM15",
     "idf.flashType": "UART"

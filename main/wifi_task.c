@@ -23,7 +23,7 @@ static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 static int led_state = 0;
 int wifi_connect_status = 0;
-int sleep_state = 0;
+static int sleep_state = 0;
 static const char *TAG = "WIFI_TASK"; // TAG for debug
 
 char index_html[8192];
