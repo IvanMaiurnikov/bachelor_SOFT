@@ -23,14 +23,14 @@ const static adc_channel_t ADC_CHANNELS[POLL_CHANNELS_NUM] = {
 };
 
 const static ADC_COEF ADC_CHANNEL_CONV_COEF[POLL_CHANNELS_NUM] = {
-    {0.0, 1.34},
-    {0.0, 1.34},
-    {0.0, 1.34},
-    {0.0, 1.34}
+    {0.0, 2.0},
+    {0.0, 2.0},
+    {0.0, 2.0},
+    {0.0, 2.0}
 };
 
 ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
-extern TaskHandle_t TaskHandlerWifi;
+//extern TaskHandle_t TaskHandlerWifi;
 extern TaskHandle_t TaskHandlerLCD;
 static int adc_sleep = 0;
 
@@ -102,7 +102,7 @@ static int16_t adc_wakeup_subtasks()
 {
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
-    xTaskNotify(TaskHandlerWifi, 1 << WAKEUP_BITNUM, eSetBits);
+    //xTaskNotify(TaskHandlerWifi, 1 << WAKEUP_BITNUM, eSetBits);
     xTaskNotify(TaskHandlerLCD, 1 << WAKEUP_BITNUM, eSetBits);
     return 0;
 }
@@ -176,7 +176,7 @@ void adc_poll_task(void *pvParameter) {
                 cur_total_voltage >= MAX_CELL_VOLT*POLL_CHANNELS_NUM - 0.01){
                 if (bat_running_mode != BAT_CHARGE_MODE){
                     bat_running_mode = BAT_CHARGE_MODE;
-                    adc_sleep = adc_wakeup_subtasks();
+                    //adc_sleep = adc_wakeup_subtasks();
                 }
                 prev_total_volt = cur_total_voltage;
             }
@@ -185,13 +185,12 @@ void adc_poll_task(void *pvParameter) {
                 if (bat_running_mode != BAT_DISCHARGE_MODE){
                     ESP_LOGI(TAG,"Entering sleep mode");
                     bat_running_mode = BAT_DISCHARGE_MODE;
-                    xTaskNotify(TaskHandlerWifi, 1 << SLEEP_BITNUM, eSetBits);
-                    xTaskNotify(TaskHandlerLCD, 1 << SLEEP_BITNUM, eSetBits);
-                    rtc_gpio_pullup_en(GPIO_NUM_13);
-                    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
-                    esp_sleep_enable_timer_wakeup(1000000L);
-                    adc_sleep = 1;
-                    esp_deep_sleep_start();
+                    //xTaskNotify(TaskHandlerLCD, 1 << SLEEP_BITNUM, eSetBits);
+                    //rtc_gpio_pullup_en(GPIO_NUM_13);
+                    //esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
+                    //esp_sleep_enable_timer_wakeup(1000000L);
+                    //adc_sleep = 1;
+                    //esp_deep_sleep_start();
                 }
                 prev_total_volt = cur_total_voltage;
             }
