@@ -16,5 +16,5 @@ void app_main() {
     // Initialize NVS
     xTaskCreate(&adc_poll_task, "adc_task", 4096, NULL, 5, NULL);
     xTaskCreate(&lcd_task, "lcd_task",4096, NULL, 4, &TaskHandlerLCD);
-    //xTaskCreate(&led_task, "led_task",1024, NULL, 6, &TaskHandlerLED);
+    xTaskCreate(&led_task, "led_task",1024, NULL, 6, &TaskHandlerLED);
 }
