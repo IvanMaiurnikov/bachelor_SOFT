@@ -10,7 +10,7 @@
 static const char *TAG = "APP_MAIN"; // TAG for debug
 //extern TaskHandle_t TaskHandlerLCD;
 extern TaskHandle_t TaskHandlerLED;
-extern TaskHandle_t TaskHandlerWiFi
+extern TaskHandle_t TaskHandlerWiFi;
 
 #define GPIO_LED GPIO_NUM_22
 #define LED_ON_STATE 0
