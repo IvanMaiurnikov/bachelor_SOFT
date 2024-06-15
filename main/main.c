@@ -16,5 +16,5 @@ void app_main()
     // Initialize NVS
     xTaskCreate(&adc_poll_task, "adc_task", 4096, NULL, 5, NULL);
     xTaskCreate(&lcd_task, "lcd_task",4096, NULL, 4, &TaskHandlerLCD);
-    xTaskCreate(&wifi_task, "wifi_task", 4096, NULL, 5, &TaskHandlerWifi);
+    xTaskCreate(&wifi_task, "wifi_task", 4096, NULL, 6, &TaskHandlerWifi);
 }
