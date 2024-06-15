@@ -3,20 +3,16 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-//#include "soc/soc_caps.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "adc_task.h"
 #include "led_task.h"
-#define GPIO_LED 5
-#define LED_ON_STATE 0
-#define LED_OFF_STATE 1
-static const char *TAG="LED_TASK";
+#define GPIO_LED GPIO_NUM_22
+
+static const char TAG[]="LED_TASK";
 extern ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
-enum  LED_STATE_ENUM {LED_ON, LED_OFF} ;
-typedef enum LED_STATE_ENUM LED_STATE_ENUM;
-static const uint32_t PULSE_PERIOD_MS = 500;
-TaskHandle_t TaskHandlerLED;
+
+TaskHandle_t TaskHandlerLED = NULL;
 static uint32_t volt_to_pulse(float volt, uint32_t period){
     uint32_t pulse_width = 0;
     /*
@@ -49,24 +45,20 @@ static uint32_t volt_to_pulse(float volt, uint32_t period){
 }
 
 void led_task(void *pvParameter){
-    LED_STATE_ENUM led_state = LED_OFF;
-    uint32_t on_state_tout = 0;
+    TickType_t on_state_tout = 0;
     gpio_reset_pin(GPIO_LED);
     gpio_set_direction(GPIO_LED, GPIO_MODE_OUTPUT); ///* Set the GPIO as a push/pull output */
+    gpio_set_pull_mode(GPIO_LED, GPIO_PULLUP_ENABLE);
     while(1){
-        on_state_tout = volt_to_pulse(adc_msg[1].voltage, PULSE_PERIOD_MS);
+        //on_state_tout = volt_to_pulse(adc_msg[1].voltage, PULSE_PERIOD_MS);
+        on_state_tout = volt_to_pulse(adc_msg[0].voltage, PULSE_PERIOD_MS);
         if (on_state_tout < 5) on_state_tout = 5;
-        ESP_LOGI(TAG, "On state = %lu", on_state_tout);
-        if (led_state==LED_OFF){
-            led_state = LED_ON;
-            gpio_set_level(GPIO_LED, led_state);
-            vTaskDelay(pdMS_TO_TICKS(on_state_tout));
-        } else {
-            if(on_state_tout < PULSE_PERIOD_MS){
-                led_state = LED_OFF;
-                gpio_set_level(GPIO_LED, led_state);
-                vTaskDelay(pdMS_TO_TICKS(PULSE_PERIOD_MS - on_state_tout));
-            }
-        }
+        ESP_LOGI(TAG, "LED on state, ms: %lu", on_state_tout);
+        gpio_set_level(GPIO_LED, 0);
+        vTaskDelay(pdMS_TO_TICKS(on_state_tout));
+        ESP_LOGI(TAG, "LED off");
+        gpio_set_level(GPIO_LED, 1);
+        if(on_state_tout >= PULSE_PERIOD_MS) on_state_tout = PULSE_PERIOD_MS - 5;
+        vTaskDelay(pdMS_TO_TICKS(PULSE_PERIOD_MS - on_state_tout));
     }
 }
