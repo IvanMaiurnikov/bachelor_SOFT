@@ -11,6 +11,8 @@
     #define SLEEP_BITNUM 0
     #define WAKEUP_BITNUM 1
 
+    #define ADC_VBAT_CHANNEL 0
+
     typedef struct {
         unsigned int channel;
         int adc_raw;

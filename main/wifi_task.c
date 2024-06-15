@@ -28,7 +28,8 @@ static const char *TAG = "WIFI_TASK"; // TAG for debug
 char index_html[8192];
 char update_json[256];
 extern ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
-TaskHandle_t TaskHandlerWifi = NULL;
+extern TaskHandle_t TaskHandlerWifi;
+
 
 static void initi_web_page_buffer(void)
 {

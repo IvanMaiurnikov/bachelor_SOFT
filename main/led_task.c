@@ -10,9 +10,9 @@
 #define GPIO_LED GPIO_NUM_22
 
 static const char TAG[]="LED_TASK";
-extern ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
+extern ADC_MESSAGE adc_msg;
 
-TaskHandle_t TaskHandlerLED = NULL;
+extern TaskHandle_t TaskHandlerLED;
 static uint32_t volt_to_pulse(float volt, uint32_t period){
     uint32_t pulse_width = 0;
     /*
@@ -50,8 +50,7 @@ void led_task(void *pvParameter){
     gpio_set_direction(GPIO_LED, GPIO_MODE_OUTPUT); ///* Set the GPIO as a push/pull output */
     gpio_set_pull_mode(GPIO_LED, GPIO_PULLUP_ENABLE);
     while(1){
-        //on_state_tout = volt_to_pulse(adc_msg[1].voltage, PULSE_PERIOD_MS);
-        on_state_tout = volt_to_pulse(adc_msg[0].voltage, PULSE_PERIOD_MS);
+        on_state_tout = volt_to_pulse(adc_msg.voltage, PULSE_PERIOD_MS);
         if (on_state_tout < 5) on_state_tout = 5;
         ESP_LOGI(TAG, "LED on state, ms: %lu", on_state_tout);
         gpio_set_level(GPIO_LED, 0);
