@@ -1,6 +1,16 @@
 #ifndef _ADC_POLL_H
     #define _ADC_POLL_H
     #define POLL_CHANNELS_NUM 4
+    #define SAMPLES_PER_MEASURE 16
+    #define MAX_CELL_VOLT (4.2)
+
+    #define BAT_CHARGE_MODE 1
+    #define BAT_HOLD_MODE 0
+    #define BAT_DISCHARGE_MODE -1
+
+    #define SLEEP_BITNUM 0
+    #define WAKEUP_BITNUM 1
+
     typedef struct {
         unsigned int channel;
         int adc_raw;

@@ -47,7 +47,7 @@
             bottom:10px;
             right:10px;
         }
-        #charge-1, #charge-2, #charge-3 { 
+        #charge-1, #charge-2, #charge-3, #charge-4 { 
             width: 0%; 
             background-color: #3BC700;
             position: absolute;
@@ -60,7 +60,7 @@
             -o-transition: width 1s ease-in-out;
             transition: width 1s ease-in-out;
         }
-        #val-1, #val-2, #val-3 { 
+        #val-1, #val-2, #val-3, #val-4 { 
             position: absolute;
             left:120px;
             top:42px;
@@ -68,7 +68,7 @@
             font-weight: bold;
             z-index: 200;
         }
-        #volt-1, #volt-2, #volt-3 { 
+        #volt-1, #volt-2, #volt-3, #volt-4 { 
             position: absolute;
             left:100%;
             top:42px;
@@ -146,27 +146,25 @@
                 </div>
             </div>
         </div>
+        <div class="battery-cont">
+            <div class="battery"> 
+                <div class="top"></div> 
+                <div class="charge">
+                    <div id="charge-4"></div>
+                    <div class="sep sep-25"></div>
+                    <div class="sep sep-50"></div>
+                    <div class="sep sep-75"></div>
+                    <div id="val-4"></div>
+                    <div id="volt-4"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="fl">
         <div class="prop-block">
             Total:
             <b id="voltage-total"></b>
             V
-        </div>
-        <div class="prop-block">
-            Current:
-            <b id="current"></b>
-            A
-        </div>
-        <div class="prop-block">
-            Power:
-            <b id="power"></b>
-            W
-        </div>
-        <div class="prop-block">
-            Capacity:
-            <b id="capacity"></b>
-            mAh
         </div>
     </div>
     </body>
@@ -183,14 +181,24 @@
                     var colorLow = "#ed3f46";
                     var colorMiddle = "#fcb537";
                     var colorHigh = "#3BC700";
-                    for(var i=1; i<=3; i++)
+                    for(var i=1; i<=4; i++)
                     {
                         voltageTotal += data["voltage-"+i];
-                        var percent = data["voltage-"+i]*100/12;
-                        percent = Math.round(percent * 10) / 10;
+                        var percent = 0; 
+                        var v = data["voltage-" + i]; 
+                        if(v >=3.755 && v < 3.82){
+                            percent = 25;
+                        } else if(v >= 3.82 && v < 3.96){
+                            percent = 50;
+                        }else if(v >= 3.96 && v < 4.15){
+                            percent = 75;
+                        } else if(v >= 4.15){
+                            percent = 100;
+                        }
+                        //percent = Math.round(percent * 10) / 10;
                         if(percent <= 15)
                             document.getElementById("charge-"+i).style.backgroundColor = colorLow;
-                        else if(percent <= 85)
+                        else if(percent <= 75)
                             document.getElementById("charge-"+i).style.backgroundColor = colorMiddle;
                         else
                             document.getElementById("charge-"+i).style.backgroundColor = colorHigh;
@@ -201,9 +209,6 @@
                     // console.log(voltageTotal);
                     voltageTotal = Math.round(voltageTotal * 10) / 10;
                     document.getElementById("voltage-total").textContent = voltageTotal;
-                    document.getElementById("current").textContent = data["current"];
-                    document.getElementById("power").textContent = data["power"];
-                    document.getElementById("capacity").textContent = data["capacity"];
                 }
             };
             xhttp.open("GET", "/update", true);
