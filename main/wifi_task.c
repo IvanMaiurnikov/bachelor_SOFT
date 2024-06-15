@@ -8,7 +8,6 @@
 
 #define EXAMPLE_ESP_WIFI_SSID CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS CONFIG_ESP_WIFI_PASSWORD
-#define LED_PIN 5
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -23,7 +22,7 @@ static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 static int led_state = 0;
 int wifi_connect_status = 0;
-static int sleep_state = 0;
+static int wifi_sleep_state = 0;
 static const char *TAG = "WIFI_TASK"; // TAG for debug
 
 char index_html[8192];
@@ -213,8 +212,6 @@ void wifi_task(void *pvParameter){
         connect_wifi();
         // GPIO initialization
         if (wifi_connect_status) {
-            esp_rom_gpio_pad_select_gpio(LED_PIN);
-            gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
             led_state = 0;
             ESP_LOGI(TAG, "Web Server is running ... ...\n");
             initi_web_page_buffer();
@@ -227,8 +224,8 @@ void wifi_task(void *pvParameter){
         if( pdTRUE == xTaskNotifyWait(0x00, 0x00, &notif_val, (TickType_t)portMAX_DELAY)){
             if (notif_val == NOTIFY_SLEEP_WIFI){
                 ESP_LOGI(TAG, "Entering WiFi sleep mode\n");
-                if (sleep_state == 0){
-                    sleep_state = 1;
+                if (wifi_sleep_state == 0){
+                    wifi_sleep_state = 1;
                     if (server){
                         httpd_unregister_uri(server, uri_get.uri);
                         httpd_unregister_uri(server, uri_update.uri);
@@ -247,7 +244,7 @@ void wifi_task(void *pvParameter){
 
         if( pdTRUE == xTaskNotifyWait(0x00, 0x00, &notif_val, (TickType_t)portMAX_DELAY)){
             if (notif_val == NOTIFY_WAKE_WIFI){
-                sleep_state = 0;
+                wifi_sleep_state = 0;
                 ESP_LOGI(TAG, "Waking up WiFi\n");
             }
         }
