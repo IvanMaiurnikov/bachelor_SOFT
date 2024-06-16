@@ -49,13 +49,14 @@ void led_task(void *pvParameter){
     gpio_reset_pin(GPIO_LED);
     gpio_set_direction(GPIO_LED, GPIO_MODE_OUTPUT); ///* Set the GPIO as a push/pull output */
     gpio_set_pull_mode(GPIO_LED, GPIO_PULLUP_ENABLE);
+    ESP_LOGI(TAG, "Starting LED task");
     while(1){
         on_state_tout = volt_to_pulse(adc_msg.voltage, PULSE_PERIOD_MS);
         if (on_state_tout < 5) on_state_tout = 5;
-        ESP_LOGI(TAG, "LED on state, ms: %lu", on_state_tout);
+        //ESP_LOGI(TAG, "LED on state, ms: %lu", on_state_tout);
         gpio_set_level(GPIO_LED, 0);
         vTaskDelay(pdMS_TO_TICKS(on_state_tout));
-        ESP_LOGI(TAG, "LED off");
+        //ESP_LOGI(TAG, "LED off");
         gpio_set_level(GPIO_LED, 1);
         if(on_state_tout >= PULSE_PERIOD_MS) on_state_tout = PULSE_PERIOD_MS - 5;
         vTaskDelay(pdMS_TO_TICKS(PULSE_PERIOD_MS - on_state_tout));

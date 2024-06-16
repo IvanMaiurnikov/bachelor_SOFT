@@ -68,7 +68,8 @@ esp_err_t send_web_page(httpd_req_t *req)
 
 esp_err_t update_web_page(httpd_req_t *req){
     int response;
-    sprintf(update_json, "{\"voltage\": %.2f, \"mode\': %d, \"cycles\": %d, \"percent\": %d}", adc_msg.voltage, adc_msg.bat_mode, adc_msg.cycles, adc_msg.capacity_percent);
+    sprintf(update_json, "{\"voltage\": %.2f, \"mode\": %d, \"cycles\": %d, \"percent\": %d}", adc_msg.voltage, adc_msg.bat_mode, adc_msg.cycles, adc_msg.capacity_percent);
+    ESP_LOGI(TAG, "%s", update_json);
     response = httpd_resp_send(req, update_json, HTTPD_RESP_USE_STRLEN);
     return response;
 }
@@ -134,6 +135,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
 }
 
 void connect_wifi(void) {
+    ESP_LOGI(TAG, "Connect WiFi started...");
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -197,9 +199,11 @@ void connect_wifi(void) {
 }
 
 void wifi_task(void *pvParameter){
+    ESP_LOGI(TAG, "WiFi task");
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     uint32_t notif_val;
+    // Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());

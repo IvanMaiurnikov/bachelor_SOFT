@@ -17,10 +17,9 @@ extern TaskHandle_t TaskHandlerWiFi;
 #define LED_OFF_STATE 1
 
 void app_main() {
-    // Initialize NVS
     ESP_LOGI(TAG, "Starting tasks");
     xTaskCreate(&adc_poll_task, "adc_task", 4096, NULL, 5, NULL);
     //xTaskCreate(&lcd_task, "lcd_task",4096, NULL, 6, &TaskHandlerLCD); //
-    xTaskCreate(&led_task, "led_task",4096, NULL, 7, &TaskHandlerLED);
-    xTaskCreate(&led_task, "wifi_task",4096, NULL, 8, NULL);
+    xTaskCreate(&wifi_task, "wifi_task",4096, NULL, 7, NULL);
+    xTaskCreate(&led_task, "led_task",4096, NULL, 6, &TaskHandlerLED);
 }
