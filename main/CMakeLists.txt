@@ -1,7 +1,7 @@
 set(srcs
-	 "main.c"
-        "adc_task.c"
-     "wifi_task.c"
+	 "wifi_task.c"
+     "main.c"
+     "adc_task.c"
      "led_task.c"
     )
 idf_component_register(SRCS ${srcs}

@@ -11,6 +11,7 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "driver/rtc_io.h"
 #include "esp_sleep.h"
+#include "wifi_task.h"
 
 #define ADC_POLL_ATTEN           ADC_ATTEN_DB_12
 
@@ -25,8 +26,9 @@ ADC_MESSAGE adc_msg = {
     .cycles = 0,
     .bat_mode = BAT_HOLD_MODE
 };
-extern TaskHandle_t TaskHandlerWifi;
+extern TaskHandle_t wifi_handler;
 extern TaskHandle_t TaskHandlerLED;
+TaskHandle_t TaskHandlerADC = NULL;
 static int adc_sleep = 0;
 
 /*---------------------------------------------------------------
@@ -97,13 +99,14 @@ static int16_t adc_wakeup_subtasks()
 {
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
-    xTaskNotify(TaskHandlerWifi, 1 << WAKEUP_BITNUM, eSetBits);
+    //xTaskNotify(wifi_handler, 1 << WAKEUP_BITNUM, eSetBits);
+    xTaskCreate(&wifi_task, "wifi_task",4096, NULL, 7, &wifi_handler);
     xTaskNotify(TaskHandlerLED, 1 << WAKEUP_BITNUM, eSetBits);
     return 0;
 }
 
 static int16_t adc_sleep_subtasks(){
-    xTaskNotify(TaskHandlerWifi, 1 << SLEEP_BITNUM, eSetBits);
+    xTaskNotify(wifi_handler, 1 << SLEEP_BITNUM, eSetBits);
     xTaskNotify(TaskHandlerLED, 1 << SLEEP_BITNUM, eSetBits);
     return 1;
 }
@@ -172,11 +175,18 @@ void adc_poll_task(void *pvParameter) {
         //check sleeping mode
         if (adc_sleep){
             wakeup_reason = esp_sleep_get_wakeup_cause();
-            if(wakeup_reason == ESP_SLEEP_WAKEUP_EXT0){
-               adc_sleep = adc_wakeup_subtasks();
+            switch (wakeup_reason){
+                case ESP_SLEEP_WAKEUP_EXT0:
+                     ESP_LOGI(TAG, "Wake up by button");
+                     adc_sleep = adc_wakeup_subtasks();
+                     break;
+                case ESP_SLEEP_WAKEUP_TIMER:
+                     ESP_LOGI(TAG, "Wake up by timer");
+                     break;
+                default:
+                     break;
             }
         }
-
         mv_sum = 0;
         for (int j=0; j < SAMPLES_PER_MEASURE; j++){
             ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_VBAT_CHANNEL, &mv));
@@ -211,10 +221,7 @@ void adc_poll_task(void *pvParameter) {
                     ESP_LOGI(TAG,"Entering sleep mode");
                     bat_running_mode = BAT_DISCHARGE_MODE;
                     adc_sleep = adc_sleep_subtasks();
-                    rtc_gpio_pullup_en(GPIO_NUM_13);
-                    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
-                    esp_sleep_enable_timer_wakeup(1000000L);
-                    esp_deep_sleep_start();
+                    vTaskDelay(pdMS_TO_TICKS(5000));
                 }
                 prev_total_volt = cur_total_voltage;
             }
@@ -231,7 +238,13 @@ void adc_poll_task(void *pvParameter) {
                      bat_running_mode ? "DISCHARGE" : "CHARGE");
         }
 
-        if(!adc_sleep) vTaskDelay(pdMS_TO_TICKS(1000));
-
+        if(!adc_sleep) 
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        else {
+            rtc_gpio_pullup_en(GPIO_NUM_15);
+            ESP_ERROR_CHECK(esp_sleep_enable_ext0_wakeup(GPIO_NUM_15,0));
+            ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(1000000));
+            esp_deep_sleep_start();
+        }
     }
 }

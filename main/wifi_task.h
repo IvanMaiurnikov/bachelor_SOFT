@@ -19,8 +19,7 @@
 
 #define NOTIFY_SLEEP_WIFI 1
 #define NOTIFY_WAKE_WIFI 2
-
-extern int wifi_connect_status;
+#define CONFIG_WIFI_CONN_MAX_RETRY 3
 
 void wifi_task(void *pvParameter);
 
