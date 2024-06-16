@@ -18,7 +18,13 @@ const static char *TAG = "ADC_POLLING";
 
 const static ADC_COEF ADC_CHANNEL_CONV_COEF = {0.0, 2.0};
 
-ADC_MESSAGE adc_msg;
+ADC_MESSAGE adc_msg = {
+    .adc_raw = 0,
+    .channel = 0,
+    .voltage = 0,
+    .cycles = 0,
+    .bat_mode = BAT_HOLD_MODE
+};
 extern TaskHandle_t TaskHandlerWifi;
 extern TaskHandle_t TaskHandlerLED;
 static int adc_sleep = 0;
@@ -95,13 +101,54 @@ static int16_t adc_wakeup_subtasks()
     xTaskNotify(TaskHandlerLED, 1 << WAKEUP_BITNUM, eSetBits);
     return 0;
 }
+
+static int16_t adc_sleep_subtasks(){
+    xTaskNotify(TaskHandlerWifi, 1 << SLEEP_BITNUM, eSetBits);
+    xTaskNotify(TaskHandlerLED, 1 << SLEEP_BITNUM, eSetBits);
+    return 0;
+}
+
+static uint16_t volt_to_capacity_percent(float volt){
+    uint16_t capacity_percent = 0;
+    /*
+    100%----4.20V
+    90%-----4.06V
+    80%-----3.98V
+    70%-----3.92V
+    60%-----3.87V
+    50%-----3.82V
+    40%-----3.79V
+    30%-----3.77V
+    20%-----3.74V
+    10%-----3.68V
+    5%------3.45V
+    0%------3.30V
+    */
+   
+   if(volt > 4.18) capacity_percent = 100;
+   else if(volt >= 4.06) capacity_percent = 90;
+   else if(volt >= 3.98) capacity_percent = 80;
+   else if(volt >= 3.92) capacity_percent = 70;
+   else if(volt >= 3.87) capacity_percent = 60;
+   else if(volt >= 3.82) capacity_percent = 50;
+   else if(volt >= 3.79) capacity_percent = 40;
+   else if(volt >= 3.77) capacity_percent = 30;
+   else if(volt >= 3.74) capacity_percent = 20;
+   else if(volt >= 3.68) capacity_percent = 10;
+   else if(volt >= 3.45) capacity_percent = 5;
+   else if(volt >= 3.31) capacity_percent = 1;
+   else capacity_percent = 0;
+   return capacity_percent;
+}
+
 void adc_poll_task(void *pvParameter) {
     esp_sleep_wakeup_cause_t wakeup_reason;
     float prev_total_volt = 0.0;
-    uint16_t sec_counter = 0;
-    int16_t bat_running_mode = BAT_CHARGE_MODE;          //battery running mode: 1 - charge, 0 - discharge 
-    unsigned int i;
-    int mv, mv_sum;
+    uint16_t sec_counter = 0,
+             charge_discharge_cycles = 0;
+    int16_t  bat_running_mode = BAT_CHARGE_MODE,          //battery running mode: 1 - charge, 0 - discharge 
+             mv, 
+             mv_sum;
         //-------------ADC1 Init---------------//
     adc_oneshot_unit_handle_t adc1_handle;
     adc_oneshot_unit_init_cfg_t init_config1 = {
@@ -122,7 +169,6 @@ void adc_poll_task(void *pvParameter) {
     adc_cali_handle_t adc1_cali_handle = NULL;
     bool do_calibration1 = false;
     do_calibration1 = adc_poll_calibration_init(ADC_UNIT_1, ADC_VBAT_CHANNEL, ADC_POLL_ATTEN, &adc1_cali_handle);
-    i = 0;
     while(1){
         //check sleeping mode
         if (adc_sleep){
@@ -138,18 +184,19 @@ void adc_poll_task(void *pvParameter) {
             mv_sum += mv;
         }
         adc_msg.adc_raw = mv_sum / SAMPLES_PER_MEASURE;
+
         if (do_calibration1) {
             ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_handle, adc_msg.adc_raw, &mv));
             adc_msg.voltage=((float)mv/1000.0)*ADC_CHANNEL_CONV_COEF.mult;
+            adc_msg.capacity_percent = volt_to_capacity_percent(adc_msg.voltage);
+            adc_msg.cycles = charge_discharge_cycles;
+            adc_msg.bat_mode = bat_running_mode;
         }
         if(++sec_counter >= 5){
             sec_counter=0;
-            float cur_total_voltage = 0.0;
-            for(i=0; i < POLL_CHANNELS_NUM; i++){
-                cur_total_voltage += adc_msg.voltage;
-            }
+            float cur_total_voltage = adc_msg.voltage;
             if ((cur_total_voltage - prev_total_volt) > 0.05 || 
-                cur_total_voltage >= MAX_CELL_VOLT*POLL_CHANNELS_NUM - 0.01){
+                cur_total_voltage >= MAX_CELL_VOLT - 0.01){
                 if (bat_running_mode != BAT_CHARGE_MODE){
                     bat_running_mode = BAT_CHARGE_MODE;
                     adc_sleep = adc_wakeup_subtasks();
@@ -161,7 +208,7 @@ void adc_poll_task(void *pvParameter) {
                 if (bat_running_mode != BAT_DISCHARGE_MODE){
                     ESP_LOGI(TAG,"Entering sleep mode");
                     bat_running_mode = BAT_DISCHARGE_MODE;
-                    xTaskNotify(TaskHandlerLED, 1 << SLEEP_BITNUM, eSetBits);
+                    adc_sleep_subtasks();
                     rtc_gpio_pullup_en(GPIO_NUM_13);
                     esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
                     esp_sleep_enable_timer_wakeup(1000000L);
@@ -170,8 +217,9 @@ void adc_poll_task(void *pvParameter) {
                 }
                 prev_total_volt = cur_total_voltage;
             }
-
-            if(abs(cur_total_voltage - prev_total_volt) <= 0.05){
+            float volt_diff = cur_total_voltage - prev_total_volt;
+            if(volt_diff < 0.0) volt_diff *= -1.0; 
+            if(volt_diff <= 0.05){
                 if (bat_running_mode != BAT_HOLD_MODE){
                     bat_running_mode = BAT_HOLD_MODE;
                 }

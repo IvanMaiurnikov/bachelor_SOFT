@@ -12,7 +12,7 @@
 static const char TAG[]="LED_TASK";
 extern ADC_MESSAGE adc_msg;
 
-extern TaskHandle_t TaskHandlerLED;
+TaskHandle_t TaskHandlerLED = NULL;
 static uint32_t volt_to_pulse(float volt, uint32_t period){
     uint32_t pulse_width = 0;
     /*

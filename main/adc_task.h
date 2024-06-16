@@ -14,9 +14,13 @@
     #define ADC_VBAT_CHANNEL 0
 
     typedef struct {
-        unsigned int channel;
-        int adc_raw;
-        float voltage;
+        uint16_t channel,          //ADC channel
+                 cycles,           //Charge/discharge cycles conuner
+                 capacity_percent;
+        int16_t  adc_raw,          //raw value of ADC
+                 bat_mode;         //Battery running mode: discharge=-1, hold=0, charge=1
+        float voltage;             //Voltage according to calibration value
+
     } ADC_MESSAGE;
 
     typedef struct 

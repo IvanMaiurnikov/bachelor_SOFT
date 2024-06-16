@@ -27,8 +27,8 @@ static const char *TAG = "WIFI_TASK"; // TAG for debug
 
 char index_html[8192];
 char update_json[256];
-extern ADC_MESSAGE adc_msg[POLL_CHANNELS_NUM];
-extern TaskHandle_t TaskHandlerWifi;
+extern ADC_MESSAGE adc_msg;
+TaskHandle_t TaskHandlerWifi = NULL;
 
 
 static void initi_web_page_buffer(void)
@@ -68,9 +68,7 @@ esp_err_t send_web_page(httpd_req_t *req)
 
 esp_err_t update_web_page(httpd_req_t *req){
     int response;
-    sprintf(update_json, "{\"voltage-1\": %.2f, \"voltage-2\": %.2f, \"voltage-3\": %.2f, \"voltage-4\": %.2f, \"current\":%.2f, \"power\":%.2f, \"capacity\":2200}",
-    adc_msg[0].voltage, adc_msg[1].voltage, adc_msg[2].voltage, adc_msg[3].voltage, adc_msg[4].voltage,
-    (adc_msg[0].voltage + adc_msg[1].voltage + adc_msg[2].voltage) * adc_msg[3].voltage);
+    sprintf(update_json, "{\"voltage\": %.2f, \"mode\': %d, \"cycles\": %d, \"percent\": %d}", adc_msg.voltage, adc_msg.bat_mode, adc_msg.cycles, adc_msg.capacity_percent);
     response = httpd_resp_send(req, update_json, HTTPD_RESP_USE_STRLEN);
     return response;
 }

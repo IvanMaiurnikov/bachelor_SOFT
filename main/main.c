@@ -9,8 +9,8 @@
 
 static const char *TAG = "APP_MAIN"; // TAG for debug
 //extern TaskHandle_t TaskHandlerLCD;
-TaskHandle_t TaskHandlerLED = NULL;
-TaskHandle_t TaskHandlerWiFi = NULL;
+extern TaskHandle_t TaskHandlerLED;
+extern TaskHandle_t TaskHandlerWiFi;
 
 #define GPIO_LED GPIO_NUM_22
 #define LED_ON_STATE 0
@@ -18,6 +18,7 @@ TaskHandle_t TaskHandlerWiFi = NULL;
 
 void app_main() {
     // Initialize NVS
+    ESP_LOGI(TAG, "Starting tasks");
     xTaskCreate(&adc_poll_task, "adc_task", 4096, NULL, 5, NULL);
     //xTaskCreate(&lcd_task, "lcd_task",4096, NULL, 6, &TaskHandlerLCD); //
     xTaskCreate(&led_task, "led_task",4096, NULL, 7, &TaskHandlerLED);
