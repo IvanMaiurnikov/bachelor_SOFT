@@ -12,6 +12,7 @@
     #define WAKEUP_BITNUM 1
 
     #define ADC_VBAT_CHANNEL 0
+    #define ADC_TIMEOUT_SEC 180
 
     typedef struct {
         uint16_t channel,          //ADC channel

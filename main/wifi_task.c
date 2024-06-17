@@ -24,6 +24,7 @@ static int s_retry_num = 0;
 static int led_state = 0;
 int wifi_connect_status = 0;
 static const char *TAG = "WIFI_TASK"; // TAG for debug
+static esp_netif_t *default_esp_netif = NULL;
 
 char index_html[8192];
 char update_json[256];
@@ -165,25 +166,10 @@ void connect_wifi(void) {
     ESP_ERROR_CHECK(esp_netif_init());
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
+    default_esp_netif = esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t wifi_init_cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_cfg));
-/*
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        &event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
-*/
-
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &event_handler_on_wifi_disconnect, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler_on_sta_got_ip, NULL));
     //ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &event_handler_on_wifi_connect, sta_netif));
@@ -228,12 +214,15 @@ void connect_wifi(void) {
     vEventGroupDelete(s_wifi_event_group);
 }
 
-esp_err_t wifi_sta_do_disconnect(void) {
+void wifi_sta_do_disconnect(void) {
     ESP_LOGI(TAG, "wifi_sta_do_disconnect()");
     ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &event_handler_on_wifi_disconnect));
     ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler_on_sta_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &event_handler_on_wifi_sta_start));
-    return esp_wifi_disconnect();
+    ESP_ERROR_CHECK(esp_event_loop_delete_default());
+    ESP_ERROR_CHECK(esp_wifi_disconnect());
+    esp_netif_destroy_default_wifi((void *)default_esp_netif);
+    //esp_netif_deinit();
 }
 
 static esp_err_t wifi_stop(void) {
@@ -250,7 +239,7 @@ static esp_err_t wifi_stop(void) {
 static esp_err_t wifi_shutdown(){
     ESP_LOGI(TAG, "wifi_shutdown()");
     esp_err_t err = ESP_OK;
-    err = wifi_sta_do_disconnect();
+    wifi_sta_do_disconnect();
     if(err == ESP_OK){
         err = wifi_stop();
     }
@@ -292,6 +281,7 @@ void wifi_task(void *pvParameter){
                     }
                 }
                  wifi_shutdown();
+                 esp_vfs_spiffs_unregister(NULL);
             }
         }
         vTaskDelete(NULL);

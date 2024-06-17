@@ -46,11 +46,11 @@ static uint32_t volt_to_pulse(float volt, uint32_t period){
 
 void led_task(void *pvParameter){
     TickType_t on_state_tout = 0;
+    uint32_t notif_val;
     gpio_reset_pin(GPIO_LED);
     gpio_set_direction(GPIO_LED, GPIO_MODE_OUTPUT); ///* Set the GPIO as a push/pull output */
-    gpio_set_pull_mode(GPIO_LED, GPIO_PULLUP_ENABLE);
     ESP_LOGI(TAG, "Starting LED task");
-    while(1){
+    while(pdFALSE == xTaskNotifyWait(0x00, 0x00, &notif_val, 0)){
         on_state_tout = volt_to_pulse(adc_msg.voltage, PULSE_PERIOD_MS);
         if (on_state_tout < 5) on_state_tout = 5;
         //ESP_LOGI(TAG, "LED on state, ms: %lu", on_state_tout);
@@ -61,4 +61,7 @@ void led_task(void *pvParameter){
         if(on_state_tout >= PULSE_PERIOD_MS) on_state_tout = PULSE_PERIOD_MS - 5;
         vTaskDelay(pdMS_TO_TICKS(PULSE_PERIOD_MS - on_state_tout));
     }
+    gpio_set_level(GPIO_LED, 1);
+    ESP_LOGI(TAG, "Exiting the LED task");
+    vTaskDelete(NULL);
 }
