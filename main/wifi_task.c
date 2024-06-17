@@ -251,33 +251,32 @@ void wifi_task(void *pvParameter){
     }
     ESP_ERROR_CHECK(ret);
 
-    while(1){
-        wifi_connect_status = connect_wifi();
-        // GPIO initialization
-        if (wifi_connect_status) {
-            ESP_LOGI(TAG, "Web Server is running ... ...\n");
-            initi_web_page_buffer();
-            //server = setup_server();
-            if (ESP_OK == httpd_start(&server, &config)){
-                httpd_register_uri_handler(server, &uri_get);
-                httpd_register_uri_handler(server, &uri_update);
-            }
-        }
 
-        while( pdTRUE == xTaskNotifyWait(0x00, 0x00, &notif_val, (TickType_t)portMAX_DELAY)){
-            if (notif_val == NOTIFY_SLEEP_WIFI){
-                ESP_LOGI(TAG, "Entering WiFi sleep mode\n");
-                if (server){
-                    httpd_unregister_uri(server, uri_get.uri);
-                    httpd_unregister_uri(server, uri_update.uri);
-                    if(ESP_OK == httpd_stop(server)){
-                        ESP_LOGI(TAG, "HTTP server stopped");
-                    }
-                }
-                wifi_shutdown();
-                ESP_LOGI(TAG, "WiFi stopped");
-                break;
-            }
+    wifi_connect_status = connect_wifi();
+    if (wifi_connect_status) {
+        ESP_LOGI(TAG, "Web Server is running ... ...\n");
+        initi_web_page_buffer();
+        //server = setup_server();
+        if (ESP_OK == httpd_start(&server, &config)){
+            httpd_register_uri_handler(server, &uri_get);
+            httpd_register_uri_handler(server, &uri_update);
         }
     }
+
+    while( pdTRUE == xTaskNotifyWait(0x00, 0x00, &notif_val, (TickType_t)portMAX_DELAY)){
+        if (notif_val == NOTIFY_SLEEP_WIFI){
+            ESP_LOGI(TAG, "Entering WiFi sleep mode\n");
+            if (server){
+                httpd_unregister_uri(server, uri_get.uri);
+                httpd_unregister_uri(server, uri_update.uri);
+                if(ESP_OK == httpd_stop(server)){
+                    ESP_LOGI(TAG, "HTTP server stopped");
+                }
+            }
+            wifi_shutdown();
+            ESP_LOGI(TAG, "WiFi stopped");
+            break;
+        }
+    }
+    vTaskDelete(NULL);
 }
