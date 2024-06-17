@@ -95,11 +95,10 @@ static void adc_poll_calibration_deinit(adc_cali_handle_t handle)
 #endif
 }
 
-static int16_t adc_wakeup_subtasks()
-{
+static int16_t adc_wakeup_subtasks(){
+    ESP_LOGI(TAG, "Waking up subtasks");
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_TIMER);
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
-    //xTaskNotify(wifi_handler, 1 << WAKEUP_BITNUM, eSetBits);
     xTaskCreate(&wifi_task, "wifi_task",4096, NULL, 7, &wifi_handler);
     xTaskNotify(TaskHandlerLED, 1 << WAKEUP_BITNUM, eSetBits);
     return 0;
